@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Santiago Labarca</title>
+  <meta name="description" content="Santiago Labarca — Berkeley Haas MBA, ex-fintech operator, and builder of AI tools people use every day.">
+  <meta property="og:title" content="Santiago Labarca">
+  <meta property="og:description" content="Results, projects and background — the interactive version of my résumé.">
+  <meta property="og:type" content="website">
+  <meta property="og:image" content="assets/photo.jpg">
+  <meta name="twitter:card" content="summary">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='7' fill='%232f5bea'/><text x='16' y='22' font-family='Arial' font-weight='700' font-size='15' fill='white' text-anchor='middle'>SL</text></svg>">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <header class="nav">
+    <div class="wrap nav-inner">
+      <a href="#top" class="brand">Santiago Labarca</a>
+      <nav aria-label="Sections">
+        <a href="#experience">Experience</a>
+        <a href="#projects">Built</a>
+        <a href="#about">About</a>
+      </nav>
+      <button class="theme-toggle" type="button" aria-label="Toggle dark mode">◐</button>
+    </div>
+  </header>
+
+  <main id="top">
+    <section class="hero wrap" id="hero"></section>
+
+    <section class="section wrap" id="experience" aria-labelledby="exp-title">
+      <p class="eyebrow">Experience</p>
+      <h2 id="exp-title">Results, grouped by what I'm good at</h2>
+      <p class="lede">Pick a theme. Tap any card for the context behind the number.</p>
+      <div class="tabs" role="tablist" aria-label="Competencies"></div>
+      <p class="bucket-blurb" aria-live="polite"></p>
+      <div class="results"></div>
+    </section>
+
+    <section class="section wrap" id="projects" aria-labelledby="proj-title">
+      <p class="eyebrow">Things I've built</p>
+      <h2 id="proj-title">Software I wrote, shipped and still run</h2>
+      <p class="lede">Built end to end, from architecture to the 7 a.m. bug report.</p>
+      <div class="projects"></div>
+    </section>
+
+    <section class="section wrap" id="about" aria-labelledby="about-title">
+      <p class="eyebrow">About</p>
+      <h2 id="about-title">Outside the résumé</h2>
+      <div class="about"></div>
+    </section>
+  </main>
+
+  <footer class="wrap footer"></footer>
+
+  <script src="content.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
