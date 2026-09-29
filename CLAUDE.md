@@ -1,7 +1,9 @@
 # Portfolio site
 
-Static site, deployed on Santiago's **personal** Vercel account (NOT the Berkeley one — they have
-look-alike project names). Pushing to `main` deploys.
+Static site, live at https://santiagolabarca.vercel.app. Vercel login **`slabarcaf`**, team
+`santiagos-projects-9ae9cb3c`, project `portfolio`. NOT `santiagolabarca-2093` (the login his
+Chrome is usually signed into — it can't see this project). Pushing to `main` deploys (~30s).
+Deployment Protection is OFF on purpose: recruiters must open it without a Vercel login.
 
 - Edit copy only in `content.js`. Strings starting with `TODO` render with a dashed outline;
   grep for `TODO` before deploying.
