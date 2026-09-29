@@ -35,11 +35,18 @@
 
     <section class="section wrap" id="experience" aria-labelledby="exp-title">
       <p class="eyebrow">Experience</p>
-      <h2 id="exp-title">Results, grouped by what I'm good at</h2>
-      <p class="lede">Pick a theme. Tap any card for the context behind the number.</p>
-      <div class="tabs" role="tablist" aria-label="Competencies"></div>
+      <div class="exp-head">
+        <h2 id="exp-title">Results, grouped by what I'm good at</h2>
+        <div class="view-switch" role="group" aria-label="Group results">
+          <button type="button" data-view="theme" aria-pressed="true">By theme</button>
+          <button type="button" data-view="company" aria-pressed="false">By company</button>
+        </div>
+      </div>
+      <p class="lede lede-exp"></p>
+      <div class="tabs" role="tablist" aria-label="Themes"></div>
       <p class="bucket-blurb" aria-live="polite"></p>
-      <div class="results"></div>
+      <div class="results" id="results" role="tabpanel"></div>
+      <div class="by-company" hidden></div>
     </section>
 
     <section class="section wrap" id="projects" aria-labelledby="proj-title">

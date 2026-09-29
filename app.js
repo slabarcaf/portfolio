@@ -8,7 +8,7 @@
   const t = (s) => (String(s).startsWith("TODO") ? `<span class="todo">${esc(s)}</span>` : esc(s));
   const external = (href) => /^https?:/.test(href) ? ' target="_blank" rel="noopener"' : "";
 
-  // Hook for a future audience switch (?lens=corp). v0.0.1 ships the tech lens only.
+  // Hook for a future audience switch (?lens=corp). Only the tech lens exists today.
   const lens = new URLSearchParams(location.search).get("lens") || "tech";
   document.documentElement.dataset.lens = lens;
 
@@ -28,48 +28,103 @@
         </div>
       </div>
       <img class="hero-photo" src="${esc(C.about.photo)}" alt="Portrait of ${esc(h.name)}" width="200" height="200">
-    </div>
-    <div class="metrics">
-      ${h.metrics.map((m) => `<div class="metric"><b>${t(m.value)}</b><span>${t(m.label)}</span></div>`).join("")}
     </div>`;
 
-  // Experience: tabs by competency, expandable result cards
-  const buckets = C.experience.buckets;
-  const tabs = $(".tabs");
-  tabs.innerHTML = buckets.map((b, i) => `
-    <button class="tab" role="tab" id="tab-${b.id}" aria-selected="${i === 0}" aria-controls="results" data-id="${b.id}">
-      ${esc(b.label)}<span class="count">${b.results.length}</span>
-    </button>`).join("");
-  const results = $(".results");
-  results.id = "results";
-  results.setAttribute("role", "tabpanel");
+  // Experience — one set of result cards, grouped by theme or by company.
+  const companyById = Object.fromEntries(C.companies.map((c) => [c.id, c]));
+  const themes = C.themes.filter((th) => C.results.some((r) => r.theme === th.id));
+  let cardSeq = 0;
 
-  function showBucket(id) {
-    const b = buckets.find((x) => x.id === id) || buckets[0];
-    tabs.querySelectorAll(".tab").forEach((el) => el.setAttribute("aria-selected", el.dataset.id === b.id));
-    results.setAttribute("aria-labelledby", `tab-${b.id}`);
-    $(".bucket-blurb").innerHTML = t(b.blurb);
-    results.innerHTML = b.results.map((r, i) => `
-      <article class="card" style="animation-delay:${i * 50}ms">
-        <button class="card-head" aria-expanded="false" aria-controls="r-${b.id}-${i}">
+  function card(r, i, { showOrg }) {
+    const id = `r-${cardSeq++}`;
+    const org = companyById[r.company];
+    const roleLine = showOrg ? `${esc(org.name)} · ${esc(r.role)}` : esc(r.role);
+    return `
+      <article class="card" style="animation-delay:${i * 40}ms">
+        <button class="card-head" aria-expanded="false" aria-controls="${id}">
           <div class="big">${t(r.metric)}</div>
           <h3>${t(r.headline)}</h3>
-          <div class="org"><span>${t(r.org)}</span><span class="chev" aria-hidden="true">▾</span></div>
+          <div class="org"><span>${roleLine}</span><span class="chev" aria-hidden="true">▾</span></div>
         </button>
-        <div class="card-body" id="r-${b.id}-${i}">
-          <p class="role">${t(r.role)} · ${t(r.period)}</p>
+        <div class="card-body" id="${id}">
           <ul>${r.bullets.map((x) => `<li>${t(x)}</li>`).join("")}</ul>
           ${r.link ? `<p><a href="${esc(r.link)}">See the project →</a></p>` : ""}
         </div>
-      </article>`).join("");
+      </article>`;
   }
+
+  const tabs = $(".tabs");
+  const results = $(".results");
+  const byCompany = $(".by-company");
+  const blurb = $(".bucket-blurb");
+  let view = "theme";
+  let currentTheme = themes[0].id;
+
+  tabs.innerHTML = themes.map((th) => `
+    <button class="tab" role="tab" id="tab-${th.id}" aria-controls="results" data-id="${th.id}">
+      ${esc(th.label)}<span class="count">${C.results.filter((r) => r.theme === th.id).length}</span>
+    </button>`).join("");
+
+  function showTheme(id) {
+    const th = themes.find((x) => x.id === id) || themes[0];
+    currentTheme = th.id;
+    tabs.querySelectorAll(".tab").forEach((el) => el.setAttribute("aria-selected", el.dataset.id === th.id));
+    results.setAttribute("aria-labelledby", `tab-${th.id}`);
+    blurb.innerHTML = t(th.blurb);
+    results.innerHTML = C.results.filter((r) => r.theme === th.id).map((r, i) => card(r, i, { showOrg: true })).join("");
+  }
+
+  function renderCompanies() {
+    byCompany.innerHTML = C.companies.map((co) => {
+      const own = C.results.filter((r) => r.company === co.id);
+      if (!own.length) return "";
+      const groups = co.stages
+        ? co.stages.map((s) => ({ label: s.label, items: own.filter((r) => r.stage === s.id) }))
+        : [{ label: null, items: own }];
+      return `
+        <section class="company">
+          <header class="company-head">
+            <div>
+              <h3>${esc(co.name)}</h3>
+              <p class="company-place">${esc(co.place)}</p>
+            </div>
+            <ul class="roles">${co.roles.map((r) => `<li><b>${esc(r.title)}</b><span>${esc(r.period)}</span></li>`).join("")}</ul>
+            <p class="company-context">${t(co.context)}</p>
+          </header>
+          ${groups.map((g) => `
+            ${g.label ? `<p class="stage">${esc(g.label)}</p>` : ""}
+            <div class="results">${g.items.map((r, i) => card(r, i, { showOrg: false })).join("")}</div>`).join("")}
+        </section>`;
+    }).join("");
+  }
+
+  function setView(v, { updateHash = true } = {}) {
+    view = v === "company" ? "company" : "theme";
+    document.querySelectorAll(".view-switch button").forEach((b) => b.setAttribute("aria-pressed", b.dataset.view === view));
+    const isTheme = view === "theme";
+    tabs.hidden = !isTheme;
+    blurb.hidden = !isTheme;
+    results.hidden = !isTheme;
+    byCompany.hidden = isTheme;
+    $("#exp-title").textContent = isTheme ? "Results, grouped by what I'm good at" : "Results, role by role";
+    $(".lede-exp").textContent = isTheme
+      ? "Pick a theme. Tap any card for the context behind the number."
+      : "Every role, newest first. Tap any card for the context behind the number.";
+    if (isTheme) showTheme(currentTheme); else renderCompanies();
+    if (updateHash) history.replaceState(null, "", isTheme ? `#experience/${currentTheme}` : "#experience/company");
+  }
+
+  document.querySelector(".view-switch").addEventListener("click", (e) => {
+    const b = e.target.closest("button[data-view]");
+    if (b) setView(b.dataset.view);
+  });
   tabs.addEventListener("click", (e) => {
     const tab = e.target.closest(".tab");
     if (!tab) return;
-    showBucket(tab.dataset.id);
+    showTheme(tab.dataset.id);
     history.replaceState(null, "", `#experience/${tab.dataset.id}`);
   });
-  // Arrow keys move between tabs
+  // Arrow keys move between theme tabs
   tabs.addEventListener("keydown", (e) => {
     if (!["ArrowLeft", "ArrowRight"].includes(e.key)) return;
     const all = [...tabs.querySelectorAll(".tab")];
@@ -78,15 +133,17 @@
     next.focus();
     next.click();
   });
-  results.addEventListener("click", (e) => {
+  // Card expand/collapse, in either view
+  $("#experience").addEventListener("click", (e) => {
     const head = e.target.closest(".card-head");
     if (!head) return;
-    const card = head.parentElement;
-    const open = card.classList.toggle("open");
+    const open = head.parentElement.classList.toggle("open");
     head.setAttribute("aria-expanded", open);
   });
+
   const deep = location.hash.match(/^#experience\/(\w+)/);
-  showBucket(deep ? deep[1] : buckets[0].id);
+  if (deep && deep[1] === "company") setView("company", { updateHash: false });
+  else { if (deep) currentTheme = deep[1]; setView("theme", { updateHash: false }); }
 
   // Projects
   $(".projects").innerHTML = C.projects.map((p) => `
@@ -95,19 +152,41 @@
         <p class="kicker">${t(p.kicker)}</p>
         <h3>${t(p.name)}</h3>
       </div>
-      <p>${t(p.brief)}</p>
-      <div class="chips">${p.stack.map((s) => `<span class="chip">${esc(s)}</span>`).join("")}</div>
+      <p class="brief">${t(p.brief)}</p>
+      ${p.stats ? `<div class="pstats">${p.stats.map((s) => `<div><b>${t(s.value)}</b><span>${t(s.label)}</span></div>`).join("")}</div>` : ""}
+      <div>
+        <p class="sub-label">What it does <span>— tap a box</span></p>
+        <div class="boxes">
+          ${p.boxes.map((b) => `
+            <button class="box" aria-expanded="false">
+              <b>${t(b.title)}</b>
+              <span class="box-text">${t(b.text)}</span>
+              <span class="box-detail">${t(b.detail)}</span>
+            </button>`).join("")}
+        </div>
+      </div>
+      ${p.approach ? `
+        <div>
+          <p class="sub-label">${esc(p.approach.title)}</p>
+          <ol class="steps">
+            ${p.approach.steps.map((s, i) => `<li><span class="step-n">${i + 1}</span><b>${esc(s.label)}</b><p>${t(s.text)}</p></li>`).join("")}
+          </ol>
+        </div>` : ""}
       <details class="features">
-        <summary>Key features (${p.features.length})</summary>
-        <ul>${p.features.map((f) => `<li>${t(f)}</li>`).join("")}</ul>
+        <summary>Under the hood</summary>
+        <div class="chips">${p.stack.map((s) => `<span class="chip">${esc(s)}</span>`).join("")}</div>
       </details>
-      ${p.askMe ? `<div class="ask"><b>${esc(p.askMe.title)}</b><p>${t(p.askMe.text)}</p></div>` : ""}
       <div class="links">
         ${p.links.map((l) => l.href
           ? `<a class="btn" href="${esc(l.href)}"${external(l.href)}>${esc(l.label)} ↗${l.note ? ` <small>${esc(l.note)}</small>` : ""}</a>`
           : `<span class="btn disabled">${esc(l.label)}</span>`).join("")}
       </div>
     </article>`).join("");
+  $(".projects").addEventListener("click", (e) => {
+    const box = e.target.closest(".box");
+    if (!box) return;
+    box.setAttribute("aria-expanded", box.getAttribute("aria-expanded") !== "true");
+  });
 
   // About
   const a = C.about;
@@ -128,12 +207,11 @@
 
   $(".footer").innerHTML = `<span>© ${new Date().getFullYear()} ${esc(C.hero.name)}</span><span>v${esc(C.version)} · hand-built, no framework</span>`;
 
-  // Theme toggle (remembered per viewer; storage may be unavailable)
+  // Theme: light by default; dark only when the viewer picks it (remembered per viewer).
   const root = document.documentElement;
-  try { const saved = localStorage.getItem("theme"); if (saved) root.dataset.theme = saved; } catch (_) {}
+  try { if (localStorage.getItem("theme") === "dark") root.dataset.theme = "dark"; } catch (_) {}
   $(".theme-toggle").addEventListener("click", () => {
-    const dark = root.dataset.theme ? root.dataset.theme === "dark" : matchMedia("(prefers-color-scheme: dark)").matches;
-    root.dataset.theme = dark ? "light" : "dark";
+    root.dataset.theme = root.dataset.theme === "dark" ? "light" : "dark";
     try { localStorage.setItem("theme", root.dataset.theme); } catch (_) {}
   });
 
