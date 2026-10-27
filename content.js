@@ -351,4 +351,13 @@ window.CONTENT = {
     ],
     resume: "assets/Santiago-Labarca-Resume.pdf",
   },
+
+  // Voice assistant pop-up (the voice-agent project, embedded in an iframe).
+  voice: {
+    button: "Talk to my AI assistant",
+    title: "My AI assistant",
+    note: "It's an AI, not me. It answers from my résumé and stories, in English or Spanish.",
+    url: "https://voice-agent-three-sable.vercel.app/demo",
+    engine: "open", // "open" (open source) or "managed" (ElevenLabs); visitors can switch in the panel
+  },
 };

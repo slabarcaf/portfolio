@@ -225,3 +225,35 @@ details.features ul { margin: 12px 0 0; padding-left: 18px; color: var(--muted);
 .steps b { font-size: 15px; }
 .steps p { margin: 8px 0 0; font-size: 14px; }
 details.features .chips { margin-top: 10px; }
+
+/* Voice assistant pop-up (voice.js) */
+.voice-fab {
+  position: fixed; right: 16px; bottom: 16px; z-index: 20;
+  display: inline-flex; align-items: center; gap: 8px;
+  border: none; border-radius: 999px; padding: 12px 18px;
+  background: var(--accent); color: var(--on-accent); box-shadow: var(--shadow);
+  font: 600 14px/1 Inter, system-ui, sans-serif; cursor: pointer;
+}
+.voice-fab:hover { filter: brightness(1.08); }
+.voice-fab-icon { font-size: 10px; animation: voice-pulse 2s ease-in-out infinite; }
+@keyframes voice-pulse { 50% { opacity: .35; } }
+@media (prefers-reduced-motion: reduce) { .voice-fab-icon { animation: none; } }
+.voice-panel {
+  position: fixed; right: 16px; bottom: 16px; z-index: 30;
+  width: min(400px, calc(100vw - 32px)); height: min(640px, calc(100dvh - 32px));
+  display: flex; flex-direction: column;
+  background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius);
+  box-shadow: var(--shadow); overflow: hidden;
+}
+.voice-panel[hidden] { display: none; }
+.voice-head { display: flex; gap: 12px; align-items: flex-start; padding: 14px 16px; border-bottom: 1px solid var(--line); }
+.voice-head > div { flex: 1; }
+.voice-head p { margin: 2px 0 0; font-size: 13px; line-height: 1.4; color: var(--muted); }
+.voice-close {
+  border: 1px solid var(--line); background: var(--surface); color: var(--text);
+  border-radius: 8px; width: 32px; height: 32px; cursor: pointer; flex: none;
+}
+.voice-panel iframe { flex: 1; width: 100%; border: 0; background: var(--bg); }
+@media (max-width: 460px) {
+  .voice-panel { right: 8px; bottom: 8px; width: calc(100vw - 16px); height: calc(100dvh - 16px); }
+}
