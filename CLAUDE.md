@@ -20,3 +20,7 @@ Deployment Protection is OFF on purpose: recruiters must open it without a Verce
   corporate version; only `tech` exists today.
 - The résumé PDF in `assets/` is public once deployed (it includes a phone number).
 - Local preview: launch config "portfolio" in `~/Documents/.claude/launch.json` (port 4322).
+- Voice assistant pop-up: `voice.js` + the `voice` entry in `content.js` (label, default engine).
+  It iframes `https://voice-agent-three-sable.vercel.app/demo?embed=1` (repo slabarcaf/voice-agent);
+  closing the panel blanks the iframe, which ends the call and frees the mic. The voice agent only
+  allows being framed by this site and localhost:4322 (`frame-ancestors` in its vercel.json).
