@@ -22,12 +22,34 @@
       <button type="button" class="voice-close" aria-label="Close">✕</button>
     </div>
     <iframe title="${esc(V.title)}" allow="microphone; autoplay"></iframe>`;
-  document.body.append(button, panel);
+  // A one-time nudge a few seconds after landing; dismissing it is remembered for the visit.
+  const T = V.teaser;
+  const teaser = document.createElement("div");
+  teaser.className = "voice-teaser";
+  teaser.setAttribute("role", "status");
+  teaser.hidden = true;
+  if (T) teaser.innerHTML = `
+    <button type="button" class="voice-teaser-close" aria-label="Dismiss">✕</button>
+    <strong>${esc(T.title)}</strong>
+    <p>${esc(T.text)}</p>
+    <button type="button" class="voice-teaser-cta">${esc(T.cta)}</button>`;
+
+  document.body.append(teaser, button, panel);
   const frame = panel.querySelector("iframe");
 
   // The iframe loads only when opened, and is unloaded on close: that ends any call and
   // releases the microphone.
+  const seen = () => { try { return sessionStorage.getItem("voice-teaser") === "done"; } catch (_) { return false; } };
+  function hideTeaser() {
+    teaser.hidden = true;
+    try { sessionStorage.setItem("voice-teaser", "done"); } catch (_) {}
+  }
+  if (T && !seen()) setTimeout(() => { if (panel.hidden && !seen()) teaser.hidden = false; }, T.delayMs || 3500);
+  teaser.querySelector(".voice-teaser-close")?.addEventListener("click", hideTeaser);
+  teaser.querySelector(".voice-teaser-cta")?.addEventListener("click", () => open());
+
   function open() {
+    hideTeaser();
     const theme = document.documentElement.dataset.theme === "dark" ? "dark" : "light";
     frame.src = `${V.url}?embed=1&engine=${encodeURIComponent(V.engine)}&theme=${theme}`;
     panel.hidden = false;

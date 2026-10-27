@@ -257,3 +257,22 @@ details.features .chips { margin-top: 10px; }
 @media (max-width: 460px) {
   .voice-panel { right: 8px; bottom: 8px; width: calc(100vw - 16px); height: calc(100dvh - 16px); }
 }
+.voice-teaser {
+  position: fixed; right: 16px; bottom: 76px; z-index: 21;
+  width: min(320px, calc(100vw - 32px)); padding: 16px 16px 14px;
+  background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius);
+  box-shadow: var(--shadow); animation: voice-in .3s ease-out;
+}
+.voice-teaser[hidden] { display: none; }
+.voice-teaser strong { display: block; font-size: 16px; padding-right: 28px; }
+.voice-teaser p { margin: 4px 0 12px; font-size: 14px; line-height: 1.45; color: var(--muted); }
+.voice-teaser-cta {
+  border: none; border-radius: 999px; padding: 9px 16px; cursor: pointer;
+  background: var(--accent); color: var(--on-accent); font: 600 14px/1 Inter, system-ui, sans-serif;
+}
+.voice-teaser-close {
+  position: absolute; top: 10px; right: 10px; width: 28px; height: 28px; border-radius: 8px;
+  border: none; background: none; color: var(--muted); cursor: pointer;
+}
+@keyframes voice-in { from { opacity: 0; transform: translateY(8px); } }
+@media (prefers-reduced-motion: reduce) { .voice-teaser { animation: none; } }

@@ -357,6 +357,7 @@ window.CONTENT = {
     button: "Talk to my AI assistant",
     title: "My AI assistant",
     note: "It's an AI, not me. It answers from my résumé and stories, in English or Spanish.",
+    teaser: { title: "Don't want to scroll?", text: "Talk to my AI assistant instead. Ask about my experience, projects or background, out loud.", cta: "Start talking", delayMs: 3500 },
     url: "https://voice-agent-three-sable.vercel.app/demo",
     engine: "open", // "open" (open source) or "managed" (ElevenLabs); visitors can switch in the panel
   },
