@@ -22,17 +22,22 @@
       <button type="button" class="voice-close" aria-label="Close">✕</button>
     </div>
     <iframe title="${esc(V.title)}" allow="microphone; autoplay"></iframe>`;
-  // A one-time nudge a few seconds after landing; dismissing it is remembered for the visit.
+  // A centered pop-up shortly after landing; either answer is remembered for the visit.
   const T = V.teaser;
   const teaser = document.createElement("div");
   teaser.className = "voice-teaser";
-  teaser.setAttribute("role", "status");
   teaser.hidden = true;
   if (T) teaser.innerHTML = `
-    <button type="button" class="voice-teaser-close" aria-label="Dismiss">✕</button>
-    <strong>${esc(T.title)}</strong>
-    <p>${esc(T.text)}</p>
-    <button type="button" class="voice-teaser-cta">${esc(T.cta)}</button>`;
+    <div class="voice-teaser-card" role="dialog" aria-modal="true" aria-labelledby="voice-teaser-title">
+      <button type="button" class="voice-teaser-close" aria-label="Close">✕</button>
+      <span class="voice-teaser-badge" aria-hidden="true">●</span>
+      <strong id="voice-teaser-title">${esc(T.title)}</strong>
+      <p>${esc(T.text)}</p>
+      <div class="voice-teaser-actions">
+        <button type="button" class="voice-teaser-cta">${esc(T.cta)}</button>
+        <button type="button" class="voice-teaser-skip">${esc(T.skip || "No thanks")}</button>
+      </div>
+    </div>`;
 
   document.body.append(teaser, button, panel);
   const frame = panel.querySelector("iframe");
@@ -44,9 +49,17 @@
     teaser.hidden = true;
     try { sessionStorage.setItem("voice-teaser", "done"); } catch (_) {}
   }
-  if (T && !seen()) setTimeout(() => { if (panel.hidden && !seen()) teaser.hidden = false; }, T.delayMs || 3500);
+  if (T && !seen()) setTimeout(() => {
+    if (!panel.hidden || seen()) return;
+    teaser.hidden = false;
+    teaser.querySelector(".voice-teaser-cta").focus();
+  }, T.delayMs ?? 1200);
+  teaser.addEventListener("click", (e) => { if (e.target === teaser) hideTeaser(); }); // backdrop
   teaser.querySelector(".voice-teaser-close")?.addEventListener("click", hideTeaser);
+  teaser.querySelector(".voice-teaser-skip")?.addEventListener("click", hideTeaser);
   teaser.querySelector(".voice-teaser-cta")?.addEventListener("click", () => open());
+  // Any element with data-voice-open (the hero button) opens the panel too.
+  document.addEventListener("click", (e) => { if (e.target.closest("[data-voice-open]")) open(); });
 
   function open() {
     hideTeaser();
@@ -64,5 +77,9 @@
   }
   button.addEventListener("click", open);
   panel.querySelector(".voice-close").addEventListener("click", close);
-  document.addEventListener("keydown", (e) => { if (e.key === "Escape" && !panel.hidden) close(); });
+  document.addEventListener("keydown", (e) => {
+    if (e.key !== "Escape") return;
+    if (!teaser.hidden) hideTeaser();
+    else if (!panel.hidden) close();
+  });
 })();

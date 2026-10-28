@@ -22,7 +22,8 @@
         <p class="tagline">${t(h.tagline)}</p>
         <p class="sub">${t(h.sub)}</p>
         <div class="cta">
-          <a class="btn primary" href="#experience">See the results</a>
+          ${C.voice ? `<button type="button" class="btn primary voice-cta" data-voice-open><span class="voice-fab-icon" aria-hidden="true">●</span>${esc(C.voice.hero || C.voice.button)}</button>` : ""}
+          <a class="btn${C.voice ? "" : " primary"}" href="#experience">See the results</a>
           <a class="btn" href="#projects">What I've built</a>
           <a class="btn" href="${esc(C.about.resume)}" download>Download résumé</a>
         </div>
