@@ -2,219 +2,175 @@
 (function () {
   const C = window.CONTENT;
   const $ = (sel) => document.querySelector(sel);
+  const root = document.documentElement;
 
   const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
   // Wraps text; anything still marked TODO gets a visible dashed outline.
   const t = (s) => (String(s).startsWith("TODO") ? `<span class="todo">${esc(s)}</span>` : esc(s));
   const external = (href) => /^https?:/.test(href) ? ' target="_blank" rel="noopener"' : "";
+  // Photo placeholder: "TODO photo: Golf" renders as a hatched frame captioned "Golf".
+  const photo = (label, cls = "") => `<figure class="ph ${cls}"><figcaption>${esc(String(label).replace(/^TODO photo:\s*/, ""))}</figcaption></figure>`;
 
-  // Hook for a future audience switch (?lens=corp). Only the tech lens exists today.
-  const lens = new URLSearchParams(location.search).get("lens") || "tech";
-  document.documentElement.dataset.lens = lens;
+  // Lens: an opaque key in the path (/k7q2) picks the version; ?lens=<name> overrides for testing.
+  const key = location.pathname.split("/").filter(Boolean)[0];
+  const asked = new URLSearchParams(location.search).get("lens");
+  const lensName = (asked && C.lenses[asked]) ? asked : (C.lensKeys[key] || "default");
+  const lens = C.lenses[lensName];
+  root.dataset.lens = lensName;
 
-  // Hero
-  const h = C.hero;
-  $("#hero").innerHTML = `
-    <div class="hero-top">
+  const bioLine = (parts) => `<span class="bio-line">${parts.map((p) => typeof p === "string" ? esc(p)
+    : `<button type="button" class="tip">${esc(p.w)}<span class="tip-card" role="tooltip">${esc(p.tip)}</span></button>`).join("")}</span>`;
+
+  // Intro
+  const [first, ...rest] = C.name.split(" ");
+  $("#intro").innerHTML = `
+    <p class="eyebrow">${esc(lens.eyebrow)}</p>
+    <h1>${esc(first)}<span>${esc(rest.join(" "))}</span></h1>
+    <div class="intro-grid">
       <div>
-        <p class="eyebrow">${t(h.eyebrow)}</p>
-        <h1>${t(h.name)}</h1>
-        <p class="tagline">${t(h.tagline)}</p>
-        <p class="sub">${t(h.sub)}</p>
+        <p class="bio">${bioLine(C.bio.line1)}${bioLine(lens.line2)}${bioLine(C.bio.line3)}</p>
         <div class="cta">
-          ${C.voice ? `<button type="button" class="btn primary voice-cta" data-voice-open><span class="voice-fab-icon" aria-hidden="true">●</span>${esc(C.voice.hero || C.voice.button)}</button>` : ""}
-          <a class="btn${C.voice ? "" : " primary"}" href="#experience">See the results</a>
-          <a class="btn" href="#projects">What I've built</a>
-          <a class="btn" href="${esc(C.about.resume)}" download>Download résumé</a>
+          <a class="btn primary" href="#journey">See the journey ↓</a>
+          ${C.voice ? `<button type="button" class="btn" data-voice-open><span class="voice-dot" aria-hidden="true">●</span>${esc(C.voice.hero)}</button>` : ""}
+          <a class="btn ghost" href="#numbers">Just the numbers</a>
         </div>
       </div>
-      <img class="hero-photo" src="${esc(C.about.photo)}" alt="Portrait of ${esc(h.name)}" width="200" height="200">
+      <img class="photo" src="${esc(C.photo)}" alt="Portrait of ${esc(C.name)}" width="260" height="325">
     </div>`;
+  // Highlighted phrases: hover/focus on desktop, tap toggles on touch.
+  document.addEventListener("click", (e) => {
+    const tip = e.target.closest(".tip");
+    document.querySelectorAll(".tip.open").forEach((o) => o !== tip && o.classList.remove("open"));
+    if (tip) tip.classList.toggle("open");
+  });
 
-  // Experience — one set of result cards, grouped by theme or by company.
+  // Photo strip (doubled so the loop is seamless)
+  const strip = C.strip.map((s) => photo(s)).join("");
+  $(".strip").innerHTML = strip + strip;
+
+  // Journey: one screen per stop; "Open the story" lists that stop's results.
   const companyById = Object.fromEntries(C.companies.map((c) => [c.id, c]));
-  const themes = C.themes.filter((th) => C.results.some((r) => r.theme === th.id));
-  let cardSeq = 0;
-
-  function card(r, i, { showOrg }) {
-    const id = `r-${cardSeq++}`;
-    const org = companyById[r.company];
-    const roleLine = showOrg ? `${esc(org.name)} · ${esc(r.role)}` : esc(r.role);
+  const resultLine = (r) => `
+    <li class="result">
+      <b>${t(r.metric)}</b>
+      <div><p>${t(r.headline)}</p><ul>${r.bullets.map((x) => `<li>${t(x)}</li>`).join("")}</ul>
+      ${r.link ? `<a href="${esc(r.link)}">See the project →</a>` : ""}</div>
+    </li>`;
+  $(".journey").innerHTML = C.journey.map((s) => {
+    const own = C.results.filter((r) => s.companies.includes(r.company));
+    const focus = lens.focus && s.companies[0] === lens.focus;
     return `
-      <article class="card" style="animation-delay:${i * 40}ms">
-        <button class="card-head" aria-expanded="false" aria-controls="${id}">
-          <div class="big">${t(r.metric)}</div>
-          <h3>${t(r.headline)}</h3>
-          <div class="org"><span>${roleLine}</span><span class="chev" aria-hidden="true">▾</span></div>
-        </button>
-        <div class="card-body" id="${id}">
-          <ul>${r.bullets.map((x) => `<li>${t(x)}</li>`).join("")}</ul>
-          ${r.link ? `<p><a href="${esc(r.link)}">See the project →</a></p>` : ""}
+      <article class="stop reveal${focus ? " focus" : ""}${s.metric ? "" : " small"}" id="stop-${s.companies[0]}">
+        <div class="stop-meta"><span class="stop-years">${esc(s.years)}</span><span>${esc(s.place)}</span></div>
+        <div class="stop-body">
+          <p class="stop-org">${esc(s.org)} <span>· ${esc(s.role)}</span></p>
+          ${s.metric ? `<p class="stop-metric">${t(s.metric)}</p><p class="stop-label">${t(s.label)}</p>` : ""}
+          <p class="stop-line">${t(s.line)}</p>
+          ${own.length ? `<details class="stop-more"${focus ? " open" : ""}><summary>Open the story <span>(${own.length})</span></summary><ul class="results">${own.map(resultLine).join("")}</ul></details>` : ""}
         </div>
+        ${s.photo ? photo(s.photo, "stop-photo") : ""}
       </article>`;
-  }
+  }).join("");
 
-  const tabs = $(".tabs");
-  const results = $(".results");
-  const byCompany = $(".by-company");
-  const blurb = $(".bucket-blurb");
-  let view = "theme";
-  let currentTheme = themes[0].id;
-
-  tabs.innerHTML = themes.map((th) => `
-    <button class="tab" role="tab" id="tab-${th.id}" aria-controls="results" data-id="${th.id}">
-      ${esc(th.label)}<span class="count">${C.results.filter((r) => r.theme === th.id).length}</span>
-    </button>`).join("");
-
-  function showTheme(id) {
-    const th = themes.find((x) => x.id === id) || themes[0];
-    currentTheme = th.id;
-    tabs.querySelectorAll(".tab").forEach((el) => el.setAttribute("aria-selected", el.dataset.id === th.id));
-    results.setAttribute("aria-labelledby", `tab-${th.id}`);
-    blurb.innerHTML = t(th.blurb);
-    results.innerHTML = C.results.filter((r) => r.theme === th.id).map((r, i) => card(r, i, { showOrg: true })).join("");
-  }
-
-  function renderCompanies() {
-    byCompany.innerHTML = C.companies.map((co) => {
-      const own = C.results.filter((r) => r.company === co.id);
-      if (!own.length) return "";
-      const groups = co.stages
-        ? co.stages.map((s) => ({ label: s.label, items: own.filter((r) => r.stage === s.id) }))
-        : [{ label: null, items: own }];
-      return `
-        <section class="company">
-          <header class="company-head">
-            <div>
-              <h3>${esc(co.name)}</h3>
-              <p class="company-place">${esc(co.place)}</p>
-            </div>
-            <ul class="roles">${co.roles.map((r) => `<li><b>${esc(r.title)}</b><span>${esc(r.period)}</span></li>`).join("")}</ul>
-            <p class="company-context">${t(co.context)}</p>
-          </header>
-          ${groups.map((g) => `
-            ${g.label ? `<p class="stage">${esc(g.label)}</p>` : ""}
-            <div class="results">${g.items.map((r, i) => card(r, i, { showOrg: false })).join("")}</div>`).join("")}
-        </section>`;
-    }).join("");
-  }
-
-  function setView(v, { updateHash = true } = {}) {
-    view = v === "company" ? "company" : "theme";
-    document.querySelectorAll(".view-switch button").forEach((b) => b.setAttribute("aria-pressed", b.dataset.view === view));
-    const isTheme = view === "theme";
-    tabs.hidden = !isTheme;
-    blurb.hidden = !isTheme;
-    results.hidden = !isTheme;
-    byCompany.hidden = isTheme;
-    $("#exp-title").textContent = isTheme ? "Results, grouped by what I'm good at" : "Results, role by role";
-    $(".lede-exp").textContent = isTheme
-      ? "Pick a theme. Tap any card for the context behind the number."
-      : "Every role, newest first. Tap any card for the context behind the number.";
-    if (isTheme) showTheme(currentTheme); else renderCompanies();
-    if (updateHash) history.replaceState(null, "", isTheme ? `#experience/${currentTheme}` : "#experience/company");
-  }
-
-  document.querySelector(".view-switch").addEventListener("click", (e) => {
-    const b = e.target.closest("button[data-view]");
-    if (b) setView(b.dataset.view);
-  });
-  tabs.addEventListener("click", (e) => {
-    const tab = e.target.closest(".tab");
-    if (!tab) return;
-    showTheme(tab.dataset.id);
-    history.replaceState(null, "", `#experience/${tab.dataset.id}`);
-  });
-  // Arrow keys move between theme tabs
-  tabs.addEventListener("keydown", (e) => {
-    if (!["ArrowLeft", "ArrowRight"].includes(e.key)) return;
-    const all = [...tabs.querySelectorAll(".tab")];
-    const i = all.indexOf(document.activeElement);
-    const next = all[(i + (e.key === "ArrowRight" ? 1 : -1) + all.length) % all.length];
-    next.focus();
-    next.click();
-  });
-  // Card expand/collapse, in either view
-  $("#experience").addEventListener("click", (e) => {
-    const head = e.target.closest(".card-head");
-    if (!head) return;
-    const open = head.parentElement.classList.toggle("open");
-    head.setAttribute("aria-expanded", open);
-  });
-
-  const deep = location.hash.match(/^#experience\/(\w+)/);
-  if (deep && deep[1] === "company") setView("company", { updateHash: false });
-  else { if (deep) currentTheme = deep[1]; setView("theme", { updateHash: false }); }
+  // All the numbers: every result in one table, ordered by the lens's themes.
+  const rank = (r) => (lens.order ? lens.order.indexOf(r.theme) : 0);
+  const sorted = C.results.map((r, i) => ({ r, i })).sort((a, b) => rank(a.r) - rank(b.r) || a.i - b.i).map((x) => x.r);
+  $(".numbers").innerHTML = `
+    <ul class="num-table">${sorted.map((r) => `
+      <li><b>${t(r.metric)}</b><span class="num-what">${t(r.headline)}</span><span class="num-org">${esc(companyById[r.company].name)}</span></li>`).join("")}
+    </ul>`;
 
   // Projects
-  $(".projects").innerHTML = C.projects.map((p) => `
+  $(".projects").innerHTML = C.projects.map((p) => p.chat ? `
     <article class="project">
-      <div>
+      <div class="phone" aria-label="Example chat with ${esc(p.name)}">
+        <div class="phone-top">${esc(p.name)}<small>bot</small></div>
+        ${p.chat.map((m) => `<p class="msg${m.me ? " me" : ""}">${esc(m.text)}</p>`).join("")}
+      </div>
+      <div class="project-body">
         <p class="kicker">${t(p.kicker)}</p>
         <h3>${t(p.name)}</h3>
+        <p class="brief">${t(p.brief)}</p>
+        <div class="pstats">${p.stats.map((s) => `<div><b>${t(s.value)}</b><span>${t(s.label)}</span></div>`).join("")}</div>
+        <p class="sub-label">${esc(p.approach.title)}</p>
+        <ol class="steps">${p.approach.steps.map((s, i) => `<li><span class="step-n">0${i + 1}</span><b>${esc(s.label)}</b><p>${t(s.text)}</p></li>`).join("")}</ol>
+        <details class="features"><summary>Under the hood</summary><div class="chips">${p.stack.map((s) => `<span class="chip">${esc(s)}</span>`).join("")}</div></details>
+        <div class="links">${p.links.map(linkBtn).join("")}</div>
       </div>
+    </article>` : `
+    <article class="project mini">
+      <div><p class="kicker">${t(p.kicker)}</p><h3>${t(p.name)}</h3></div>
       <p class="brief">${t(p.brief)}</p>
-      ${p.stats ? `<div class="pstats">${p.stats.map((s) => `<div><b>${t(s.value)}</b><span>${t(s.label)}</span></div>`).join("")}</div>` : ""}
-      <div>
-        <p class="sub-label">What it does <span>— tap a box</span></p>
-        <div class="boxes">
-          ${p.boxes.map((b) => `
-            <button class="box" aria-expanded="false">
-              <b>${t(b.title)}</b>
-              <span class="box-text">${t(b.text)}</span>
-              <span class="box-detail">${t(b.detail)}</span>
-            </button>`).join("")}
-        </div>
-      </div>
-      ${p.approach ? `
-        <div>
-          <p class="sub-label">${esc(p.approach.title)}</p>
-          <ol class="steps">
-            ${p.approach.steps.map((s, i) => `<li><span class="step-n">${i + 1}</span><b>${esc(s.label)}</b><p>${t(s.text)}</p></li>`).join("")}
-          </ol>
-        </div>` : ""}
-      <details class="features">
-        <summary>Under the hood</summary>
-        <div class="chips">${p.stack.map((s) => `<span class="chip">${esc(s)}</span>`).join("")}</div>
-      </details>
-      <div class="links">
-        ${p.links.map((l) => l.href
-          ? `<a class="btn" href="${esc(l.href)}"${external(l.href)}>${esc(l.label)} ↗${l.note ? ` <small>${esc(l.note)}</small>` : ""}</a>`
-          : `<span class="btn disabled">${esc(l.label)}</span>`).join("")}
-      </div>
+      <div class="chips">${p.stack.map((s) => `<span class="chip">${esc(s)}</span>`).join("")}</div>
+      <div class="links">${p.links.map(linkBtn).join("")}</div>
     </article>`).join("");
-  $(".projects").addEventListener("click", (e) => {
-    const box = e.target.closest(".box");
-    if (!box) return;
-    box.setAttribute("aria-expanded", box.getAttribute("aria-expanded") !== "true");
-  });
+  function linkBtn(l) {
+    return l.href
+      ? `<a class="btn" href="${esc(l.href)}"${external(l.href)}>${esc(l.label)} ↗${l.note ? ` <small>${esc(l.note)}</small>` : ""}</a>`
+      : `<span class="btn disabled">${esc(l.label)}</span>`;
+  }
 
-  // About
+  // Off the clock
+  $(".off-grid").innerHTML = C.offClock.map((o) => `<div class="off-card reveal">${photo(o.photo)}<p>${t(o.caption)}</p></div>`).join("");
+
+  // Random facts: a shuffled deck, dealt one at a time.
+  const order = C.facts.map((_, i) => i).sort(() => Math.random() - 0.5);
+  let dealt = 0;
+  const deckCard = $(".deck-card");
+  function deal() {
+    const i = dealt % order.length;
+    $(".deck-text").innerHTML = t(C.facts[order[i]]);
+    $(".deck-count").textContent = `${i + 1} of ${order.length}`;
+    deckCard.classList.add("flipped");
+    deckCard.classList.remove("deal"); void deckCard.offsetWidth; deckCard.classList.add("deal");
+    dealt++;
+  }
+  deckCard.addEventListener("click", deal);
+  $(".deck-deal").addEventListener("click", deal);
+
+  // Contact
   const a = C.about;
-  $(".about").innerHTML = `
-    <img src="${esc(a.photo)}" alt="${esc(C.hero.name)}" loading="lazy">
-    <div class="about-text">
-      ${a.bio.map((p) => `<p>${t(p)}</p>`).join("")}
-      <h3>Interests</h3>
-      <ul class="interests">${a.interests.map((i) => `<li>${t(i)}</li>`).join("")}</ul>
-      <h3>Education</h3>
-      <div class="edu">${a.education.map((e) => `<div><b>${t(e.school)}</b><span>${t(e.degree)} · ${t(e.period)}</span></div>`).join("")}</div>
-      <h3>Get in touch</h3>
-      <div class="links">
-        ${a.links.map((l) => `<a class="btn" href="${esc(l.href)}"${external(l.href)}>${esc(l.label)}</a>`).join("")}
-        <a class="btn primary" href="${esc(a.resume)}" download>Download résumé (PDF)</a>
-      </div>
-    </div>`;
+  $("#contact").innerHTML = `
+    <p class="eyebrow">Next stop</p>
+    <h2 id="contact-title">Let's talk</h2>
+    <p class="contact-line">Strategy, operations, or something you'd like built: the fastest way to reach me is email.</p>
+    <div class="links">
+      ${a.links.map((l) => `<a class="btn${l.label === "Email" ? " primary" : ""}" href="${esc(l.href)}"${external(l.href)}>${esc(l.label)}</a>`).join("")}
+      <a class="btn" href="${esc(C.resume)}" download>Résumé (PDF)</a>
+      ${C.voice ? `<button type="button" class="btn" data-voice-open><span class="voice-dot" aria-hidden="true">●</span>${esc(C.voice.hero)}</button>` : ""}
+    </div>
+    <div class="edu">${a.education.map((e) => `<div><b>${t(e.school)}</b><span>${t(e.degree)} · ${t(e.period)}</span></div>`).join("")}</div>`;
 
-  $(".footer").innerHTML = `<span>© ${new Date().getFullYear()} ${esc(C.hero.name)}</span><span>v${esc(C.version)} · hand-built, no framework</span>`;
+  $(".footer").innerHTML = `<span>© ${new Date().getFullYear()} ${esc(C.name)}</span><span>v${esc(C.version)} · hand-built, no framework</span>`;
 
-  // Theme: light by default; dark only when the viewer picks it (remembered per viewer).
-  const root = document.documentElement;
-  try { if (localStorage.getItem("theme") === "dark") root.dataset.theme = "dark"; } catch (_) {}
-  $(".theme-toggle").addEventListener("click", () => {
-    root.dataset.theme = root.dataset.theme === "dark" ? "light" : "dark";
+  // Theme: dark by default; light only when the viewer picks it (remembered per viewer).
+  const toggle = $(".theme-toggle");
+  const setTheme = (th) => {
+    root.dataset.theme = th;
+    toggle.setAttribute("aria-label", th === "dark" ? "Switch to light mode" : "Switch to dark mode");
+  };
+  let saved = null;
+  try { saved = localStorage.getItem("theme"); } catch (_) {}
+  setTheme(saved === "light" ? "light" : "dark");
+  toggle.addEventListener("click", () => {
+    setTheme(root.dataset.theme === "dark" ? "light" : "dark");
     try { localStorage.setItem("theme", root.dataset.theme); } catch (_) {}
   });
+
+  // Reveal on scroll
+  const reveal = new IntersectionObserver((es) => es.forEach((e) => {
+    if (e.isIntersecting) { e.target.classList.add("in"); reveal.unobserve(e.target); }
+  }), { threshold: 0.15 });
+  document.querySelectorAll(".reveal").forEach((el) => reveal.observe(el));
+
+  // Reading progress bar across the top
+  const bar = $(".progress");
+  const onScroll = () => {
+    const max = document.documentElement.scrollHeight - innerHeight;
+    bar.style.transform = `scaleX(${max > 0 ? scrollY / max : 0})`;
+  };
+  addEventListener("scroll", onScroll, { passive: true });
+  onScroll();
 
   // Highlight the nav link for the section in view
   const links = document.querySelectorAll(".nav nav a");

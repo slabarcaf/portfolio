@@ -4,69 +4,81 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Santiago Labarca</title>
-  <meta name="description" content="Santiago Labarca — Berkeley Haas MBA, ex-fintech operator, and builder of AI tools people use every day.">
+  <meta name="description" content="Santiago Labarca: from Santiago, Chile to Berkeley Haas. Ex-founder, fintech operator, and builder of AI tools people use every day.">
   <meta property="og:title" content="Santiago Labarca">
-  <meta property="og:description" content="Results, projects and background — the interactive version of my résumé.">
+  <meta property="og:description" content="Santiago → Mexico City → Berkeley. The journey, the numbers, and the things I build.">
   <meta property="og:type" content="website">
   <meta property="og:image" content="https://santiagolabarca.vercel.app/assets/photo.jpg">
   <meta property="og:url" content="https://santiagolabarca.vercel.app">
   <meta name="twitter:card" content="summary">
-  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='7' fill='%232f5bea'/><text x='16' y='22' font-family='Arial' font-weight='700' font-size='15' fill='white' text-anchor='middle'>SL</text></svg>">
+  <meta name="theme-color" content="#0e0e0c">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='7' fill='%23ff5a1f'/><text x='16' y='22' font-family='Arial' font-weight='800' font-size='15' fill='black' text-anchor='middle'>SL</text></svg>">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="styles.css">
+  <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,600;12..96,800&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/styles.css">
 </head>
 <body>
+  <div class="progress" aria-hidden="true"></div>
   <header class="nav">
     <div class="wrap nav-inner">
-      <a href="#top" class="brand">Santiago Labarca</a>
+      <a href="#top" class="brand">SL</a>
       <nav aria-label="Sections">
-        <a href="#experience">Experience</a>
+        <a href="#journey">Journey</a>
+        <a href="#numbers">Numbers</a>
         <a href="#projects">Built</a>
-        <a href="#about">About</a>
+        <a href="#off-clock">Off the clock</a>
+        <a href="#contact">Contact</a>
       </nav>
-      <button class="theme-toggle" type="button" aria-label="Toggle dark mode">◐</button>
+      <button class="theme-toggle" type="button" aria-label="Switch to light mode">◐</button>
     </div>
   </header>
 
   <main id="top">
-    <section class="hero wrap" id="hero"></section>
+    <section class="wrap intro" id="intro"></section>
 
-    <section class="section wrap" id="experience" aria-labelledby="exp-title">
-      <p class="eyebrow">Experience</p>
-      <div class="exp-head">
-        <h2 id="exp-title">Results, grouped by what I'm good at</h2>
-        <div class="view-switch" role="group" aria-label="Group results">
-          <button type="button" data-view="theme" aria-pressed="true">By theme</button>
-          <button type="button" data-view="company" aria-pressed="false">By company</button>
-        </div>
+    <div class="strip-wrap" aria-hidden="true"><div class="strip"></div></div>
+
+    <section class="wrap" id="journey" aria-labelledby="journey-title">
+      <div class="section-head">
+        <p class="eyebrow">2014 — today</p>
+        <h2 id="journey-title">Five stops,<br>one through-line</h2>
       </div>
-      <p class="lede lede-exp"></p>
-      <div class="tabs" role="tablist" aria-label="Themes"></div>
-      <p class="bucket-blurb" aria-live="polite"></p>
-      <div class="results" id="results" role="tabpanel"></div>
-      <div class="by-company" hidden></div>
+      <div class="journey"></div>
     </section>
 
-    <section class="section wrap" id="projects" aria-labelledby="proj-title">
+    <section class="wrap section" id="numbers" aria-labelledby="numbers-title">
+      <p class="eyebrow">For the skimmers</p>
+      <h2 id="numbers-title">All the numbers</h2>
+      <div class="numbers"></div>
+    </section>
+
+    <section class="wrap section" id="projects" aria-labelledby="proj-title">
       <p class="eyebrow">Things I've built</p>
-      <h2 id="proj-title">Software I wrote, shipped and still run</h2>
-      <p class="lede">Built end to end, from architecture to the 7 a.m. bug report.</p>
+      <h2 id="proj-title">What I build</h2>
       <div class="projects"></div>
     </section>
 
-    <section class="section wrap" id="about" aria-labelledby="about-title">
-      <p class="eyebrow">About</p>
-      <h2 id="about-title">Outside the résumé</h2>
-      <div class="about"></div>
+    <section class="wrap section" id="off-clock" aria-labelledby="off-title">
+      <p class="eyebrow">Off the clock</p>
+      <h2 id="off-title">Outside the résumé</h2>
+      <div class="off-grid"></div>
+      <div class="deck">
+        <button type="button" class="deck-card" aria-label="Deal a random fact">
+          <span class="deck-front">Pull a random fact<small>click anywhere here</small></span>
+          <span class="deck-back"><span class="deck-text" aria-live="polite"></span></span>
+        </button>
+        <div class="deck-row"><button type="button" class="btn primary deck-deal">Another one</button><span class="deck-count"></span></div>
+      </div>
     </section>
+
+    <section class="wrap section" id="contact" aria-labelledby="contact-title"></section>
   </main>
 
   <footer class="wrap footer"></footer>
 
-  <script src="content.js"></script>
-  <script src="app.js"></script>
-  <script src="voice.js"></script>
+  <script src="/content.js"></script>
+  <script src="/app.js"></script>
+  <script src="/voice.js"></script>
 </body>
 </html>

@@ -9,7 +9,7 @@
   button.type = "button";
   button.className = "voice-fab";
   button.setAttribute("aria-haspopup", "dialog");
-  button.innerHTML = `<span class="voice-fab-icon" aria-hidden="true">●</span>${esc(V.button)}`;
+  button.innerHTML = `<span class="voice-dot" aria-hidden="true">●</span>${esc(V.button)}`;
 
   const panel = document.createElement("div");
   panel.className = "voice-panel";
@@ -22,48 +22,48 @@
       <button type="button" class="voice-close" aria-label="Close">✕</button>
     </div>
     <iframe title="${esc(V.title)}" allow="microphone; autoplay"></iframe>`;
-  // A centered pop-up shortly after landing; either answer is remembered for the visit.
+  // A small toast once the visitor reaches the journey (not a blocking modal); shown once
+  // per visit, and never while the panel is open.
   const T = V.teaser;
-  const teaser = document.createElement("div");
-  teaser.className = "voice-teaser";
-  teaser.hidden = true;
-  if (T) teaser.innerHTML = `
-    <div class="voice-teaser-card" role="dialog" aria-modal="true" aria-labelledby="voice-teaser-title">
-      <button type="button" class="voice-teaser-close" aria-label="Close">✕</button>
-      <span class="voice-teaser-badge" aria-hidden="true">●</span>
-      <strong id="voice-teaser-title">${esc(T.title)}</strong>
-      <p>${esc(T.text)}</p>
-      <div class="voice-teaser-actions">
-        <button type="button" class="voice-teaser-cta">${esc(T.cta)}</button>
-        <button type="button" class="voice-teaser-skip">${esc(T.skip || "No thanks")}</button>
-      </div>
-    </div>`;
+  const toast = document.createElement("div");
+  toast.className = "voice-toast";
+  toast.setAttribute("role", "status");
+  toast.hidden = true;
+  if (T) toast.innerHTML = `
+    <button type="button" class="voice-toast-close" aria-label="Dismiss">✕</button>
+    <strong>${esc(T.title)}</strong>
+    <p>${esc(T.text)}</p>
+    <button type="button" class="voice-toast-cta">${esc(T.cta)}</button>`;
 
-  document.body.append(teaser, button, panel);
+  document.body.append(toast, button, panel);
   const frame = panel.querySelector("iframe");
 
   // The iframe loads only when opened, and is unloaded on close: that ends any call and
   // releases the microphone.
   const seen = () => { try { return sessionStorage.getItem("voice-teaser") === "done"; } catch (_) { return false; } };
   function hideTeaser() {
-    teaser.hidden = true;
+    toast.hidden = true;
     try { sessionStorage.setItem("voice-teaser", "done"); } catch (_) {}
   }
-  if (T && !seen()) setTimeout(() => {
-    if (!panel.hidden || seen()) return;
-    teaser.hidden = false;
-    teaser.querySelector(".voice-teaser-cta").focus();
-  }, T.delayMs ?? 1200);
-  teaser.addEventListener("click", (e) => { if (e.target === teaser) hideTeaser(); }); // backdrop
-  teaser.querySelector(".voice-teaser-close")?.addEventListener("click", hideTeaser);
-  teaser.querySelector(".voice-teaser-skip")?.addEventListener("click", hideTeaser);
-  teaser.querySelector(".voice-teaser-cta")?.addEventListener("click", () => open());
+  const trigger = document.querySelector("#journey .stop");
+  if (T && trigger && !seen()) {
+    const watch = new IntersectionObserver(([en]) => {
+      if (!en.isIntersecting) return;
+      watch.disconnect();
+      if (!panel.hidden || seen()) return;
+      toast.hidden = false;
+      setTimeout(() => { if (!toast.hidden) hideTeaser(); }, T.autoHideMs ?? 12000);
+    }, { threshold: 0.3 });
+    watch.observe(trigger);
+  }
+  toast.querySelector(".voice-toast-close")?.addEventListener("click", hideTeaser);
+  toast.querySelector(".voice-toast-cta")?.addEventListener("click", () => open());
   // Any element with data-voice-open (the hero button) opens the panel too.
   document.addEventListener("click", (e) => { if (e.target.closest("[data-voice-open]")) open(); });
 
   function open() {
     hideTeaser();
-    const theme = document.documentElement.dataset.theme === "dark" ? "dark" : "light";
+    const theme = document.documentElement.dataset.theme === "light" ? "light" : "dark";
     frame.src = `${V.url}?embed=1&engine=${encodeURIComponent(V.engine)}&theme=${theme}`;
     panel.hidden = false;
     button.hidden = true;
@@ -79,7 +79,7 @@
   panel.querySelector(".voice-close").addEventListener("click", close);
   document.addEventListener("keydown", (e) => {
     if (e.key !== "Escape") return;
-    if (!teaser.hidden) hideTeaser();
+    if (!toast.hidden) hideTeaser();
     else if (!panel.hidden) close();
   });
 })();
