@@ -367,6 +367,6 @@ window.CONTENT = {
       delayMs: 1200,
     },
     url: "https://voice-agent-three-sable.vercel.app/demo",
-    engine: "open", // "open" (open source) or "managed" (ElevenLabs); visitors can switch in the panel
+    engine: "managed", // "managed" (ElevenLabs) or "open" (open source); visitors can switch in the panel
   },
 };
